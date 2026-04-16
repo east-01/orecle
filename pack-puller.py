@@ -3,10 +3,12 @@ import os
 import pandas as pd
 import subprocess
 from tqdm import tqdm
+from pathlib import Path
 
+CWD = Path.cwd()
 INPUT_CSV = "clean_modpacks_small.csv"
 # MUST BE ABSOLUTE PATH
-DOWNLOADS_DIR = "C:/East/School/CS-668/Project/modpacks"
+DOWNLOADS_DIR = CWD / "modpacks"
 
 os.makedirs(DOWNLOADS_DIR, exist_ok=True)
 
