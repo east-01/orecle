@@ -51,7 +51,7 @@ def extract_result(recipe: Dict[str, Any]) -> Optional[Any]:
 
     return result
 
-def normalize_recipe(recipe: Dict[str, Any], source_mod: str, source_path: str) -> Dict[str, Any]:
+def normalize_recipe(recipe: Dict[str, Any], source_mod: str, source_modpack: str, source_path: str) -> Dict[str, Any]:
     """
     Convert a raw Minecraft/mod recipe JSON into a simpler normalized form.
     """
@@ -60,6 +60,7 @@ def normalize_recipe(recipe: Dict[str, Any], source_mod: str, source_path: str) 
 
     normalized: Dict[str, Any] = {
         "source_mod": source_mod,
+        "source_modpack": source_modpack,
         "source_path": source_path,
         "type": recipe_type,
         "result": result,
@@ -106,6 +107,7 @@ def extract_recipes_from_jar(jar_path: Path) -> List[Dict[str, Any]]:
     """
     recipes: List[Dict[str, Any]] = []
     source_mod = jar_path.stem
+    source_modpack = jar_path.parts[1]
 
     try:
         with zipfile.ZipFile(jar_path, "r") as jar:
@@ -113,11 +115,12 @@ def extract_recipes_from_jar(jar_path: Path) -> List[Dict[str, Any]]:
                 try:
                     with jar.open(recipe_file) as f:
                         raw = json.load(f)
-                    normalized = normalize_recipe(raw, source_mod, recipe_file)
+                    normalized = normalize_recipe(raw, source_mod, source_modpack, recipe_file)
                     recipes.append(normalized)
                 except Exception as e:
                     recipes.append({
                         "source_mod": source_mod,
+                        "source_modpack": source_modpack,
                         "source_path": recipe_file,
                         "error": str(e),
                     })
@@ -126,63 +129,71 @@ def extract_recipes_from_jar(jar_path: Path) -> List[Dict[str, Any]]:
 
     return recipes
 
-def scan_mods_folder(mods_folder: str) -> List[Dict[str, Any]]:
+def scan_mods_directory(mods_directory: str) -> List[Dict[str, Any]]:
     """
-    Scan every .jar in the mods folder and extract recipe data.
+    Scan every .jar in the mods directory and extract recipe data.
     """
-    mods_path = Path(mods_folder)
+    mods_path = Path(mods_directory)
     all_recipes: List[Dict[str, Any]] = []
 
     if not mods_path.exists():
-        raise FileNotFoundError(f"Mods folder not found: {mods_folder}")
+        print(f"Mods directory not found: {mods_directory}")
 
     jar_files = sorted(mods_path.glob("*.jar"))
-    print(f"Found {len(jar_files)} jar files.")
+    print(f"Scanning {mods_path}.\nFound {len(jar_files)} jar files.")
 
     for jar_path in jar_files:
-        print(f"Reading {jar_path.name} ...")
         jar_recipes = extract_recipes_from_jar(jar_path)
         all_recipes.extend(jar_recipes)
 
     return all_recipes
 
-def scan_modpacks_folder(modpacks_folder: str) -> List[str]:
+def scan_modpacks_directory(modpacks_directory: str) -> List[str]:
     """
-    Scan the modpacks folder to find the paths for all the mods.
+    Scan the modpacks directory to find the paths for all the mods.
     """
-    modpacks_path = Path(modpacks_folder)
-    mods_folders: List[str] = []
+
+    modpacks_path = Path(modpacks_directory)
+    mods_directories: List[str] = []
 
     if not modpacks_path.exists():
-        raise FileNotFoundError(f"Modpacks folder not found: {modpacks_folder}")
+        print(f"Error: Modpacks directory not found: {modpacks_directory}")
+        return mods_directories
 
     modpacks = sorted(modpacks_path.iterdir())
     print(f"Found {len(modpacks)} modpacks")
     
     for modpack in modpacks:
-        modpack_mods_folder = Path(modpack) / "mc" / "mods"
-        if not modpack_mods_folder.exists():
-            print(f"Error: modpack {modpack} mods folder not found.")
+        modpack_mods_directory = Path(modpack) / "mc" / "mods"
+        
+        if not modpack_mods_directory.exists():
+            print(f"Error: modpack {modpack} mods directory not found.")
+            continue
             
-        mods_folders.append(str(modpack_mods_folder))
+        mods_directories.append(str(modpack_mods_directory))
 
-    return mods_folders
+    return mods_directories
 
 def main():
-    modpacks_folder = "modpacks"
-    mods_folders = scan_modpacks_folder(modpacks_folder)
+    modpacks_directory = "modpacks"
+    recipes_directory = Path("recipes")
 
-    for mods_folder in mods_folders:
-        print(mods_folder)
-        # To-Do: Fix this name, so it all goes to one recipes folder at the project root
-        output_file = f"{mods_folder}-recipes.json"
+    if not recipes_directory.exists():
+        os.makedirs(recipes_directory, exist_ok=True)
 
-        recipes = scan_mods_folder(mods_folder)
+    mods_directories = scan_modpacks_directory(modpacks_directory)
+
+    for mods_directory in mods_directories:
+        modpack_name = mods_directory.split("/")[1]
+        output_filename = f"{modpack_name}-recipes.json"
+        output_file = recipes_directory / output_filename
+
+        recipes = scan_mods_directory(mods_directory)
     
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(recipes, f, indent=2, ensure_ascii=False)
     
-        print(f"\nSaved {len(recipes)} recipes to {output_file}")
+        print(f"Saved {len(recipes)} recipes to {output_file}")
 
 
 if __name__ == "__main__":
