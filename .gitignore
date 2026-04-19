@@ -27,3 +27,4 @@ htmlcov/
 mrpack-install
 .env
 recipes/
+orecle_vector_store/
