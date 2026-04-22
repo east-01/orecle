@@ -23,14 +23,20 @@ def run_query(vector_store: Chroma, query: str, num_results: int) -> str:
 
     return retrieved_docs_serialized
 
-def main():
+def query_vector_store(
+    query="In the cobblemon modpack, how do I get the apricorn bench recipe?",
+    num_results=NUM_RESULTS,
+    vector_store_directory=VECTOR_STORE_DIRECTORY,
+    embedding_model=EMBEDDING_MODEL,
+    collection_name=COLLECTION_NAME,
+):
     load_dotenv()
 
     if not os.environ.get("OPENAI_API_KEY"):
         print("OPENAI_API_KEY not set, this is required to run this script. Please add it to your .env for this project.")
         return None
     
-    vector_store_path = Path(VECTOR_STORE_DIRECTORY)
+    vector_store_path = Path(vector_store_directory)
 
     # Make the vectore store path if it does not yet exist
     if not vector_store_path.exists():
@@ -38,32 +44,28 @@ def main():
         return None
     
     # Initialize models
-    embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL)
+    embeddings = OpenAIEmbeddings(model=embedding_model)
 
     # Create a collection in the given vector store, may contain more than one collection
     vector_store = Chroma(
-        collection_name=COLLECTION_NAME,
+        collection_name=collection_name,
         embedding_function=embeddings,
-        persist_directory=VECTOR_STORE_DIRECTORY
+        persist_directory=vector_store_directory
     )
 
     vector_store_is_empty = vector_store._collection.count() == 0
+    if(vector_store_is_empty):
+        raise Exception("Failed to query vector store- vector store is empty.")
 
-    if not vector_store_is_empty:
-        query = "In the cobblemon modpack, how do I get the apricorn bench recipe?"
-        num_results = NUM_RESULTS 
-        
-        query_results = run_query(vector_store, query, num_results)
-        #print(query_results)
+    query_results = run_query(vector_store, query, num_results)
+    #print(query_results)
 
-        model = init_chat_model("gpt-5-mini")
-        model_query = f"Use the following context to answer this query:\n\nQuery:\n\n{query}\n\nContext:\n\n{query_results}"
-        model_response = model.invoke(model_query)
-        print(model_response.content)
+    model = init_chat_model("gpt-5-mini")
+    model_query = f"Use the following context to answer this query:\n\nQuery:\n\n{query}\n\nContext:\n\n{query_results}"
+    model_response = model.invoke(model_query)
 
+    return model_response.content
 
 
 if __name__ == "__main__":
-    main()
-
-
+    query_vector_store()

@@ -174,17 +174,17 @@ def scan_modpacks_directory(modpacks_directory: str) -> List[str]:
 
     return mods_directories
 
-def main():
-    modpacks_directory = "modpacks"
-    recipes_directory = Path("recipes")
+def extract_recipes(modpacks_directory="modpacks", recipes_directory="recipes"):
+    recipes_directory = Path(recipes_directory)
 
     if not recipes_directory.exists():
         os.makedirs(recipes_directory, exist_ok=True)
 
     mods_directories = scan_modpacks_directory(modpacks_directory)
+    output_files = []
 
     for mods_directory in mods_directories:
-        modpack_name = mods_directory.split("/")[1]
+        modpack_name = Path(mods_directory).parent.parent.name
         output_filename = f"{modpack_name}-recipes.json"
         output_file = recipes_directory / output_filename
 
@@ -194,7 +194,10 @@ def main():
             json.dump(recipes, f, indent=2, ensure_ascii=False)
     
         print(f"Saved {len(recipes)} recipes to {output_file}")
+        output_files.append(output_file)
+
+    return output_files
 
 
 if __name__ == "__main__":
-    main()
+    extract_recipes()

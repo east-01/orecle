@@ -34,25 +34,28 @@ def load_json_docs(json_docs_path: Path) -> list[Document]:
 
     return json_docs
 
-def main() -> None:
-    """
-    Create a vector store at the set directory using JSON recipes from the given directory.
-    """
+def build_vector_store(
+    recipes_directory=RECIPES_DIRECTORY,
+    vector_store_directory=VECTOR_STORE_DIRECTORY,
+    embedding_model=EMBEDDING_MODEL,
+    collection_name=COLLECTION_NAME,
+) -> None:
+    """Create a vector store using JSON recipes from the given directory."""
     load_dotenv()
 
     if not os.environ.get("OPENAI_API_KEY"):
         print("OPENAI_API_KEY not set, this is required to run this script. Please add it to your .env for this project.")
         return None
 
-    recipes_path = Path(RECIPES_DIRECTORY)
+    recipes_path = Path(recipes_directory)
 
     if not recipes_path.exists():
         print(f"Recipes directory not found at: {recipes_path}. Please generate the recipes directory first.")
         return None
     
     # Initialize models
-    embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL)
-    vector_store_path = Path(VECTOR_STORE_DIRECTORY)
+    embeddings = OpenAIEmbeddings(model=embedding_model)
+    vector_store_path = Path(vector_store_directory)
     
     # Make the vectore store path if it does not yet exist
     if not vector_store_path.exists():
@@ -60,9 +63,9 @@ def main() -> None:
     
     # Create a collection in the given vector store, may contain more than one collection
     vector_store = Chroma(
-        collection_name=COLLECTION_NAME,
+        collection_name=collection_name,
         embedding_function=embeddings,
-        persist_directory=VECTOR_STORE_DIRECTORY
+        persist_directory=vector_store_directory
     )
 
     vector_store_is_empty = vector_store._collection.count() == 0
@@ -72,5 +75,7 @@ def main() -> None:
         json_docs = load_json_docs(recipes_path)
         vector_store.add_documents(documents=json_docs)
 
+    return vector_store
+
 if __name__ == "__main__":
-    main()
+    build_vector_store()
