@@ -9,7 +9,7 @@ from langchain_chroma import Chroma
 # Initialize constants, could make these passable via args...
 VECTOR_STORE_DIRECTORY = "orecle_vector_store"
 EMBEDDING_MODEL = "text-embedding-3-large"
-RECIPES_DIRECTORY = "recipes"
+RECIPES_DIRECTORY = "modpacks"
 COLLECTION_NAME = "recipes"
 CHUNK_SIZE_MAX = 1000
 CHUNK_SIZE_MIN = 100
@@ -18,7 +18,10 @@ def load_json_docs(json_docs_path: Path) -> list[Document]:
     """
     Load JSON documents from given path as a list of langchain Document.
     """
-    json_docs_list = sorted(json_docs_path.glob("*.json"))
+    if json_docs_path.name == "recipes":
+        json_docs_list = sorted(json_docs_path.glob("*.json"))
+    else:
+        json_docs_list = sorted(json_docs_path.rglob("recipes/*.json"))
     json_docs: list[Document] = []
 
     # Break up each gian JSON file into individual objects, stored as list of langchain Document
