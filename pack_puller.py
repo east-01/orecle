@@ -4,6 +4,7 @@ import pandas as pd
 import subprocess
 from tqdm import tqdm
 from pathlib import Path
+from utils import *
 
 INPUT_CSV = "clean_modpacks_small.csv"
 DOWNLOADS_DIR = Path.cwd() / "modpacks"
@@ -24,23 +25,46 @@ def pull_packs(df, downloads_dir=DOWNLOADS_DIR):
 
 
 def pull_pack(pack_slug, downloads_dir=DOWNLOADS_DIR):
-    
-    os.makedirs(downloads_dir, exist_ok=True)
+    downloads_dir = Path(downloads_dir)
+    downloads_dir.mkdir(parents=True, exist_ok=True)
 
-    path = os.path.join(downloads_dir, pack_slug)
+    modpack_path = downloads_dir / pack_slug
+    mods_directory = modpack_path / "mc" / "mods"
 
-    if(os.path.isdir(path)):
-        tqdm.write(f"Pack {pack_slug} already exists, skipping...")
-        return
+    if mods_directory.is_dir():
+        print_as_orecle(f"Pack {pack_slug} installed.")
+        return modpack_path
 
-    tqdm.write(f"Installing {pack_slug} to {path}...")
-    os.makedirs(path, exist_ok=True)
+    print_as_orecle(f"Installing {pack_slug} to {modpack_path}...")
+    modpack_path.mkdir(parents=True, exist_ok=True)
 
-    subprocess.run(
+    completed_process = subprocess.run(
         ["mrpack-install", pack_slug],
         capture_output=True,
-        cwd=path
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        cwd=modpack_path,
+        check=False,
     )
+
+    if completed_process.returncode != 0:
+        stdout = completed_process.stdout.strip()
+        stderr = completed_process.stderr.strip()
+        raise RuntimeError(
+            f"Failed to install pack {pack_slug}.\n"
+            f"stdout:\n{stdout or '<empty>'}\n"
+            f"stderr:\n{stderr or '<empty>'}"
+        )
+
+    if not mods_directory.is_dir():
+        discovered_paths = [str(path.relative_to(modpack_path)) for path in sorted(modpack_path.rglob("*"))[:20]]
+        raise RuntimeError(
+            f"Pack {pack_slug} finished installing but did not create the expected mods directory at "
+            f"\"{mods_directory}\". Found these paths instead: {discovered_paths}"
+        )
+
+    return modpack_path
 
 
 if __name__ == "__main__":

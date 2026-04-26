@@ -12,10 +12,10 @@ EMBEDDING_MODEL = "text-embedding-3-large"
 COLLECTION_NAME = "recipes"
 NUM_RESULTS = 3
 
-def run_query(vector_store: Chroma, query: str, num_results: int) -> str:
+def query_vector_store(vector_store: Chroma, query: str, num_results: int) -> str:
     """ Runs user query agasint vector store using similarity with score """
-    retrieved_docs = vector_store.similarity_search_with_score(query, k=num_results)
 
+    retrieved_docs = vector_store.similarity_search_with_score(query, k=num_results)
     retrieved_docs_serialized = "\n\n".join(
             (f"Source: {doc.metadata}\nScore: {score}\nContent: {doc.page_content}")
         for doc, score in retrieved_docs
@@ -23,7 +23,8 @@ def run_query(vector_store: Chroma, query: str, num_results: int) -> str:
 
     return retrieved_docs_serialized
 
-def query_vector_store(
+
+def query_model(
     query="In the cobblemon modpack, how do I get the apricorn bench recipe?",
     num_results=NUM_RESULTS,
     vector_store_directory=VECTOR_STORE_DIRECTORY,
@@ -57,7 +58,7 @@ def query_vector_store(
     if(vector_store_is_empty):
         raise Exception("Failed to query vector store- vector store is empty.")
 
-    query_results = run_query(vector_store, query, num_results)
+    query_results = query_vector_store(vector_store, query, num_results)
     #print(query_results)
 
     model = init_chat_model("gpt-5-mini")
