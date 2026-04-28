@@ -5,6 +5,7 @@ from langchain_community.document_loaders import JSONLoader
 from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
+from typing import Any
 
 # Initialize constants, could make these passable via args...
 VECTOR_STORE_DIRECTORY = "orecle_vector_store"
@@ -42,7 +43,7 @@ def build_vector_store(
     vector_store_directory=VECTOR_STORE_DIRECTORY,
     embedding_model=EMBEDDING_MODEL,
     collection_name=COLLECTION_NAME,
-) -> None:
+) -> tuple[Any, Any] | None:
     """Create a vector store using JSON recipes from the given directory."""
     load_dotenv()
 

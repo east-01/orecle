@@ -51,7 +51,7 @@ def extract_result(recipe: Dict[str, Any]) -> Optional[Any]:
 
     return result
 
-def normalize_recipe(recipe: Dict[str, Any], source_mod: str, source_modpack: str, source_path: str) -> Dict[str, Any]:
+def normalize_recipe(recipe: Dict[str, Any], source_mod: str, source_modpack: str, source_path: str, source_file: str) -> Dict[str, Any]:
     """
     Convert a raw Minecraft/mod recipe JSON into a simpler normalized form.
     """
@@ -62,6 +62,7 @@ def normalize_recipe(recipe: Dict[str, Any], source_mod: str, source_modpack: st
         "source_mod": source_mod,
         "source_modpack": source_modpack,
         "source_path": source_path,
+        "source_file": source_file,
         "type": recipe_type,
         "result": result,
         "inputs": [],
@@ -99,7 +100,11 @@ def find_recipe_files_in_jar(jar_path: Path) -> List[str]:
             if (
                 name.startswith("data/")
                 and name.endswith(".json")
-                and ("/recipes/" in name or "/recipe/" in name)
+                and (
+                    "/recipes/" in name 
+                    or "/recipe/" in name
+                    or "/tags/" in name
+                )
                 and "/advancement/" not in name
                 and "/advancements/" not in name
             ):
@@ -117,16 +122,18 @@ def extract_recipes_from_jar(jar_path: Path, source_modpack: str) -> List[Dict[s
     try:
         with zipfile.ZipFile(jar_path, "r") as jar:
             for recipe_file in find_recipe_files_in_jar(jar_path):
+                source_file = Path(recipe_file).stem 
                 try:
                     with jar.open(recipe_file) as f:
                         raw = json.load(f)
-                    normalized = normalize_recipe(raw, source_mod, source_modpack, recipe_file)
+                    normalized = normalize_recipe(raw, source_mod, source_modpack, recipe_file, source_file)
                     recipes.append(normalized)
                 except Exception as e:
                     recipes.append({
                         "source_mod": source_mod,
                         "source_modpack": source_modpack,
                         "source_path": recipe_file,
+                        "source_file": source_file,
                         "error": str(e),
                     })
     except zipfile.BadZipFile:
