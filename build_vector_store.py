@@ -29,7 +29,7 @@ def load_json_docs(json_docs_path: Path) -> list[Document]:
     for json_doc in json_docs_list:
         loader = JSONLoader(
             file_path=json_doc,
-            jq_schema=".[] | {source_mod, source_modpack, source_path, type, result, inputs, pattern, raw}",
+            jq_schema=".[] | {source_mod, source_modpack, source_path, source_file, type, result, inputs, pattern, raw}",
             text_content=False,
         )
         
