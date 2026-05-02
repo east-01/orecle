@@ -8,7 +8,9 @@ from dotenv import load_dotenv
 
 MODEL_NAME="gpt-5-mini"
 MODEL_NAME_EMBEDDINGS="text-embedding-3-large"
-DOWNLOADS_DIR = (Path(__file__).resolve().parent / "modpacks").resolve()
+DOWNLOADS_DIR_PATH = Path(__file__).resolve().parent / "modpacks"
+DOWNLOADS_DIR = DOWNLOADS_DIR_PATH.resolve()
+MODPACK_DATAFRAME = DOWNLOADS_DIR_PATH / "modpacks.csv"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("starting_slug", nargs="?", help="Optional modpack slug to load on startup.")
@@ -19,6 +21,10 @@ load_dotenv(override=True)
 if not os.environ.get("OPENAI_API_KEY"):
     print("OPENAI_API_KEY not set, this is required to run this script. Please add it to your .env for this project.")
     exit(1)
+
+if(not MODPACK_DATAFRAME.exists()):
+    print(f"Modpack dataframe not found at {MODPACK_DATAFRAME}, either change the target path or run download_pack_csv.py")
+    exit(1)    
 
 modpacks_df = pd.read_csv("modpacks.csv")
 

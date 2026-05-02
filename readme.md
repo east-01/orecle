@@ -73,6 +73,7 @@ There are three steps to downloading the modpacks from modrinth: getting list of
 Since we want to get modpacks with complex recipes, we'll look for modpacks with `technology` or `optimization` categories.
 
 Run `clean_pack_csv.py` to clean the csv and get a list of modpacks that actually want to download and use in our dataset.
+The cleaner keeps packs above the configured downloads floor, groups by highest supported Minecraft version descending, sorts each version group by downloads, and caps the result count.
 
 **3.** Run `pack-puller.py` to download all of the modpacks in the specified CSV to a directory.
 

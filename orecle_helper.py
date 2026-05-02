@@ -19,14 +19,17 @@ class LoadedModpack():
     embeddings: OpenAIEmbeddings
     loaded_vector_store: Chroma
 
-    def query(self, query, model, num_results=1, verbose=False):
-        query_results = query_vector_store(self.loaded_vector_store, query, num_results)
+    def query(self, query, model=None, num_results=1, verbose=False, query_results=None):
+        if query_results is None:
+            query_results = query_vector_store(self.loaded_vector_store, query, num_results)
 
         if verbose:
             print_as_orecle("Retrieved vector store data:")
             print(query_results)
 
-        model = init_chat_model("gpt-5-mini")
+        if model is None:
+            model = init_chat_model("gpt-5-mini")
+
         model_query = f"Use the following context to answer this query:\n\nQuery:\n\n{query}\n\nContext:\n\n{query_results}"
         spinner = start_spinner("Waiting for LLM...")
         try:
@@ -66,7 +69,7 @@ def switch_modpack(slug, modpacks_df, model_name_embedding="text-embedding-3-lar
     print_as_orecle(f"Loading data...")
 
     json_docs = load_json_docs(recipes_path)
-    if(json_docs is None):
+    if(len(json_docs) == 0):
         raise RuntimeError(f"No recipe documents found under {recipes_path}")
 
     embeddings, vector_store = build_vector_store(
@@ -75,8 +78,6 @@ def switch_modpack(slug, modpacks_df, model_name_embedding="text-embedding-3-lar
         embedding_model=model_name_embedding,
         collection_name="recipes"
     )
-
-    vector_store.add_documents(documents=json_docs)
 
     return LoadedModpack(
         slug=slug,

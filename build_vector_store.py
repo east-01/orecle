@@ -14,6 +14,7 @@ RECIPES_DIRECTORY = "modpacks"
 COLLECTION_NAME = "recipes"
 CHUNK_SIZE_MAX = 1000
 CHUNK_SIZE_MIN = 100
+VECTOR_STORE_BATCH_SIZE = 5000
 
 def load_json_docs(json_docs_path: Path) -> list[Document]:
     """
@@ -37,6 +38,11 @@ def load_json_docs(json_docs_path: Path) -> list[Document]:
         json_docs.extend(docs)
 
     return json_docs
+
+
+def add_documents_in_batches(vector_store: Chroma, documents: list[Document], batch_size=VECTOR_STORE_BATCH_SIZE):
+    for start_idx in range(0, len(documents), batch_size):
+        vector_store.add_documents(documents=documents[start_idx:start_idx + batch_size])
 
 def build_vector_store(
     recipes_directory=RECIPES_DIRECTORY,
@@ -77,7 +83,7 @@ def build_vector_store(
     # Only build the vector store if it is empty
     if vector_store_is_empty:
         json_docs = load_json_docs(recipes_path)
-        vector_store.add_documents(documents=json_docs)
+        add_documents_in_batches(vector_store, json_docs)
 
     return embeddings, vector_store
 
