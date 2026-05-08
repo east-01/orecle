@@ -5,7 +5,16 @@ Orecle is an interactive command-line assistant for Minecraft modpack recipe loo
 
 ### Setup
 
-Install the Python dependencies and make sure `mrpack-install` is available on your `PATH`.
+Install the Python dependencies with:
+
+1. `uv venv`
+2. `uv sync --dev`
+
+Please activate this environment before running orecle:
+
+1. `source .venv/bin/activate`
+
+Please make sure [`mrpack-install`](#mrpack-install) is available on your `PATH`.
 
 Create a `.env` file with:
 
@@ -57,6 +66,10 @@ orecle.py
   -> LoadedModpack.query()
   -> query_vector_store()
 ```
+
+## Testing and grading
+
+You can see the results from the graded runs in orecle_grades.csv visualized in GradingResults.ipynb
 
 ## Modrinth API
 
