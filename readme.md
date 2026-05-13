@@ -3,6 +3,10 @@
 
 Orecle is an interactive command-line assistant for Minecraft modpack recipe lookup. It can download a Modrinth modpack, extract recipe JSON from the installed mods, build a local Chroma vector store, and answer recipe questions using the retrieved recipe context.
 
+Authors:
+- Ethan Mullen
+- Kyle Krick
+
 ### Setup
 
 Install the Python dependencies with:
